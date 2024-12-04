@@ -7,6 +7,7 @@ import pandas as pd
 import random
 import matplotlib.pyplot as plt
 
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import BaggingClassifier
@@ -332,6 +333,16 @@ class CustomOriginalGWO(OriginalGWO, CustomOptimizer):
 class CustomOriginalBA(OriginalBA, CustomOptimizer):
     pass
 
+def grid_search_tuning(data, model, param_grid):
+    grid_search = GridSearchCV(estimator=model, param_grid=param_grid, scoring='accuracy', cv=5)
+    grid_search.fit(data["X_train"], data["y_train"])
+    return grid_search.best_params_, grid_search.best_score_
+
+def random_search_tuning(data, model, param_distributions, n_iter=100):
+    random_search = RandomizedSearchCV(estimator=model, param_distributions=param_distributions, n_iter=n_iter, scoring='accuracy', cv=5, random_state=42)
+    random_search.fit(data["X_train"], data["y_train"])
+    return random_search.best_params_, random_search.best_score_
+
 def hyperparameter_tuning(data, algo_ml, algo_meta, epoch=100, pop_size=100, max_early_stop=None, mode="single", n_worker=None):
     if algo_ml == 'SGD':
         my_bounds = [
@@ -408,6 +419,43 @@ def hyperparameter_tuning(data, algo_ml, algo_meta, epoch=100, pop_size=100, max
     print(f"Best parameters: {model.problem.decode_solution(model.g_best.solution)}")
     return model
 
+param_grids = {
+                "SGD": {
+                    'alpha': [0.0001, 0.001, 0.01, 0.1],
+                    'l1_ratio': [0.0, 0.5, 1.0],
+                    'penalty': ['l1', 'l2', 'elasticnet'],
+                    'loss': ['hinge', 'log_loss']
+                },
+                "Bagging Clasifier": {
+                    'n_estimators': [10, 50, 100, 500],
+                    'max_features': [0.5, 0.7, 1.0],
+                    'bootstrap': [True, False],
+                    'bootstrap_features': [True, False]
+                },
+                "Decision Tree": {
+                    'min_samples_leaf': [1, 2, 5, 10],
+                    'min_samples_split': [2, 5, 10],
+                    'max_features': ['sqrt', 'log2', None],
+                    'criterion': ['gini', 'entropy']
+                },
+                "Perceptron": {
+                    'alpha': [0.0001, 0.001, 0.01, 0.1],
+                    'l1_ratio': [0.0, 0.5, 1.0],
+                    'penalty': ['l1', 'l2', 'elasticnet']
+                },
+                "Nearest Centroid": {
+                    'shrink_threshold': [0.0001, 0.001, 0.01],
+                    'metric': ['euclidean', 'manhattan']
+                },
+                "XGBoost": {
+                    'n_estimators': [10, 50, 100, 300],
+                    'max_depth': [3, 5, 7, 10],
+                    'learning_rate': [0.01, 0.05, 0.1, 0.2],
+                    'min_child_weight': [1, 5, 10],
+                    'subsample': [0.5, 0.7, 1.0],
+                    'colsample_bytree': [0.5, 0.7, 1.0]
+                }
+            }
 
 def main():
     st.set_page_config(
@@ -548,6 +596,21 @@ def main():
         index=0,
         help="Machine learning algorithm is used to train a model that learns patterns and relationships from the dataset."
         )
+        
+        # CUSTOM MESSAGE FOR CLASSIFIER
+        if algo_ml == 'Bagging Clasifier':
+            st.sidebar.warning("Bagging Classifier will take a long time to train, due to the large space exploration.")
+        elif algo_ml == 'XGBoost':
+            st.sidebar.warning("XGBoost Classifier will take a long time to train, due to the large space exploration.")
+        
+        # Selection for traditional methods
+        traditional_method = st.sidebar.selectbox(
+            "Choose a Traditional Method",
+            options=["None", "Grid Search", "Random Search"],
+            index=0,
+            help="Traditional methods are used to find the best hyperparameters for the machine learning model using grid search or random search."
+        )
+        
         algo_meta = st.sidebar.selectbox(
             "Choose a Metaheuristic Algorithm",
             options=["SMA", "HBO", "AO", 'GWO', "BA"],
@@ -710,17 +773,22 @@ def main():
         # Start Button
         if st.sidebar.button("Start Hyperparameter Tuning"):
             default_accuracy = 0.0
+            traditional_accuracy = 0.0
             tuned_accuracy = 0.0
             # add comparison acccuracy between default and tuned model
             st.markdown("### 📊 Model Performance Comparison")
-            comparison_col1, comparison_col2 = st.columns(2)
+            comparison_col1, comparison_col2, comparison_col3 = st.columns(3)
 
             with comparison_col1:
                 st.markdown("#### 🔹 Default Model", help="Model performance before hyperparameter tuning.")
                 default_accuracy_placeholder = st.success(f"##### Accuracy: {default_accuracy:.4f}")
 
             with comparison_col2:
-                st.markdown("#### 🔸 Tuned Model", help="Model performance after hyperparameter tuning.")
+                st.markdown("#### 🔸 Tuned Model (Traditional)", help="Model performance using traditional method.")
+                traditional_accuracy_placeholder = st.success(f"##### Accuracy: {traditional_accuracy:.4f}")
+
+            with comparison_col3:
+                st.markdown("#### 🔸 Tuned Model (Metaheuristic)", help="Model performance after hyperparameter tuning.")
                 tuned_accuracy_placeholder = st.success(f"##### Accuracy: {tuned_accuracy:.4f}")
 
             # Improvement placeholder
@@ -804,12 +872,36 @@ def main():
                 default_accuracy = accuracy_score(y_test, y_pred_default)
                 st.markdown("#### Your Default Model's Performance", help="Accuracy may differ from classification report due to different calculation methods, averaging techniques, and class distributions.")
                 st.success(f"##### Accuracy: {default_accuracy:.4f}")
+                default_accuracy_placeholder.success(f"##### Accuracy: {default_accuracy:.4f}")
             
             # Horizontal line to separate default and tuned results
             st.markdown("---")
             
+               # Initialize variables for results
+            traditional_results = {}
+
+            # Run traditional method if selected    
+            if traditional_method == "None":
+                traditional_accuracy_placeholder.warning("No traditional method selected.")
+            else:
+                st.markdown(f"### 🔬 Tuning Hyperparameter with `{algo_ml}` and `{traditional_method}` (Traditional Method)")
+                if traditional_method == "Grid Search":
+                    model = default_model  # Replace with the selected model based on algo_ml
+                    best_params, best_score = grid_search_tuning(data, model, param_grids[algo_ml])
+                    traditional_results = {"Best Parameters": best_params, "Best Score": best_score}
+                    
+                elif traditional_method == "Random Search":
+                    model = default_model  # Replace with the selected model based on algo_ml
+                    best_params, best_score = random_search_tuning(data, model, param_grids[algo_ml])
+                    traditional_results = {"Best Parameters": best_params, "Best Score": best_score}
+                    
+                st.write(traditional_results)
+                traditional_accuracy_placeholder.success(f"##### Accuracy: {traditional_results['Best Score']:.4f}")
+                st.markdown("---")
+
+            
             # HYPERPARAMETER TUNING START
-            st.markdown(f"### 🔬 Tuning Hyperparameter with `{algo_ml}` and `{algo_meta}`")
+            st.markdown(f"### 🔬 Tuning Hyperparameter with `{algo_ml}` and `{algo_meta}` (Metaheuristic)")
 
             # Hyperparameter tuning logic here (reusing previous implementation)
                     # Hyperparameter tuning
@@ -830,14 +922,14 @@ def main():
             if algo_ml == 'SGD':
                 model_fix = SGDClassifier(loss=param['loss'], alpha=param['alpha'], l1_ratio=param['l1_ratio'], penalty=param['penalty'], random_state=42)
             if algo_ml == 'Perceptron':
-                model_fix = Perceptron(penalty=param['penalty'], alpha=param['alpha'], l1_ratio=param['l1_ratio'])
+                model_fix = Perceptron(penalty=param['penalty'], alpha=param['alpha'], l1_ratio=param['l1_ratio'], random_state=42)
             if algo_ml == 'Decision Tree':
                 if param['max_features'] == "None":
                     max_features = None
                 model_fix = DecisionTreeClassifier(min_samples_leaf=param['min_samples_leaf'], min_samples_split= param['min_samples_split'], max_features= max_features, criterion = param['criterion'],
                                                     random_state=42)
             if algo_ml =='Bagging Clasifier':
-                model_fix = BaggingClassifier(n_estimators=param['n_estimators'], max_features=param['max_features'], bootstrap=param['bootstrap'], bootstrap_features=param['bootstrap_features'])
+                model_fix = BaggingClassifier(n_estimators=param['n_estimators'], max_features=param['max_features'], bootstrap=param['bootstrap'], bootstrap_features=param['bootstrap_features'], random_state=42)
             if algo_ml == 'Nearest Centroid':
                 model_fix = NearestCentroid(shrink_threshold=param['shrink_threshold'],metric=param['metric'])
             if algo_ml == 'XGBoost':
@@ -885,15 +977,14 @@ def main():
 
             
             # Update placeholders with actual values
-            default_accuracy_placeholder.success(f"##### Accuracy: {default_accuracy:.4f}")
             tuned_accuracy_placeholder.success(f"##### Accuracy: {tuned_accuracy:.4f}")
 
             # Calculate and display improvement
             improvement = ((tuned_accuracy - default_accuracy) / default_accuracy) * 100
             if improvement > 0:
-                improvement_placeholder.markdown(f"*Accuracy Improved From {default_accuracy:.4f} to {tuned_accuracy:.4f}*")
+                improvement_placeholder.success(f"#### Accuracy Improved by Metaheuristic From {default_accuracy:.4f} to {tuned_accuracy:.4f}")
             else:
-                improvement_placeholder.warning(f"#### 📉 No Significant Improvement (Change: {improvement:.2f}%)")
+                improvement_placeholder.warning(f"#### 📉 No Significant Improvement by Metaheuristic (Change: {improvement:.2f}%)")
 
             st.toast("Hyperparameter tuning completed!", icon='🎉')
             st.success("Hyperparameter tuning completed!", icon='🎉')
