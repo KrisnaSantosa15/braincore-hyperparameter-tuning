@@ -25,6 +25,8 @@ from mealpy.bio_based.SMA import OriginalSMA
 from mealpy.human_based.HBO import OriginalHBO
 from mealpy.swarm_based.GWO import OriginalGWO
 from mealpy.swarm_based.BA import OriginalBA
+from mealpy.swarm_based.PSO import OriginalPSO
+from mealpy.evolutionary_based.GA import BaseGA
 
 import xgboost as xgb
 from xgboost import XGBClassifier
@@ -35,6 +37,7 @@ np.random.seed(42)
 random.seed(42)
 
 # Custom Optimizer (Fix missing imports and minor logic errors)
+# Optimized Problem for each  Machine Learning Algorithm
 class SGDOptimizedProblem(Problem):
     def __init__(self, bounds=None, minmax="max", data=None, classifier_name='SGD', **kwargs):
         self.data = data
@@ -132,6 +135,7 @@ class XGBoostOptimizedProblem(Problem):
         y_predict = xgb_classifier.predict(self.data["X_test"])
         return accuracy_score(self.data["y_test"], y_predict)
 
+# Custom Optimizer from Optimizer Mealpy, so it can be make a visualization
 class CustomOptimizer(Optimizer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -316,9 +320,8 @@ class CustomOptimizer(Optimizer):
         # Display the current global best fitness as a progress text
         current_best = np.array(self.history.list_global_best[-1].target.fitness)
         self.progress_placeholder.markdown(f"<h3>Current best fitness: {current_best:.4f}</h3>", unsafe_allow_html=True)
-    
 
-
+# Custom Metaheuristic Algorithm
 class CustomOriginalAO(OriginalAO, CustomOptimizer):
     pass
 
@@ -330,7 +333,14 @@ class CustomOriginalSMA(OriginalSMA, CustomOptimizer):
 
 class CustomOriginalGWO(OriginalGWO, CustomOptimizer):
     pass
+
 class CustomOriginalBA(OriginalBA, CustomOptimizer):
+    pass
+
+class CustomOriginalPSO(OriginalPSO, CustomOptimizer):
+    pass
+
+class CustomOriginalGA(BaseGA, CustomOptimizer):
     pass
 
 def grid_search_tuning(data, model, param_grid):
@@ -408,6 +418,10 @@ def hyperparameter_tuning(data, algo_ml, algo_meta, epoch=100, pop_size=100, max
         model = CustomOriginalGWO(epoch=epoch, pop_size=pop_size)
     if algo_meta == 'BA':
         model = CustomOriginalBA(epoch=epoch, pop_size=pop_size)
+    if algo_meta == 'PSO':
+        model = CustomOriginalPSO(epoch=epoch,pop_size=pop_size)
+    if algo_meta == 'GA':
+        model = CustomOriginalGA(epoch=epoch, pop_size=pop_size)
 
     term_dict = {
         "max_fe": 10000,
@@ -613,7 +627,7 @@ def main():
         
         algo_meta = st.sidebar.selectbox(
             "Choose a Metaheuristic Algorithm",
-            options=["SMA", "HBO", "AO", 'GWO', "BA"],
+            options=["SMA", "HBO", "AO", 'GWO', "BA", "PSO", "GA"],
             index=0,
             help="Metaheuristic algorithm is used for optimizing the hyperparameters or configurations of the machine learning model"
         )
@@ -647,6 +661,8 @@ def main():
         - **AO**: Aquila Optimizer
         - **GWO**: Grey Wolf Optimizer
         - **BA**: Bat Algorithm
+        - **GA**: Genetic Algorithm
+        - **PSO**: Particle Swarm Optimizer
         """)
         
         def display_chart_descriptions(model):
@@ -889,14 +905,51 @@ def main():
                     model = default_model  # Replace with the selected model based on algo_ml
                     best_params, best_score = grid_search_tuning(data, model, param_grids[algo_ml])
                     traditional_results = {"Best Parameters": best_params, "Best Score": best_score}
+                    model.set_params(**best_params)
+                    model.fit(data["X_train"], data["y_train"])
+                    y_pred = model.predict(data["X_test"])
+                    
                     
                 elif traditional_method == "Random Search":
                     model = default_model  # Replace with the selected model based on algo_ml
                     best_params, best_score = random_search_tuning(data, model, param_grids[algo_ml])
-                    traditional_results = {"Best Parameters": best_params, "Best Score": best_score}
+                    traditional_results = {"Best Parameters": best_params, "Best Score": best_score}                
+                    model.set_params(**best_params)
+                    model.fit(data["X_train"], data["y_train"])
+                    y_pred = model.predict(data["X_test"])                
+                
+                st.subheader("Model Evaluation")
+                tuned_model_traditional_col1, tuned_model_traditional_col2 = st.columns(2)
+                with tuned_model_traditional_col1:
+                    st.markdown("#### Classification Report")
+                    report = classification_report(y_test, y_pred, output_dict=True)
+                    report_df = pd.DataFrame(report).transpose()
+                    st.dataframe(report_df.style.format(precision=2))  
+                
+                with tuned_model_traditional_col2:
+                    st.markdown("#### Best Hyperparameters")
+                    st.write(best_params) 
+                
+                new_tuned_model_traditional_col1, new_tuned_model_traditional_col2 = st.columns(2)                                   
+                with new_tuned_model_traditional_col1:
+                    st.markdown("#### Confusion Matrix")
+                    conf_matrix = confusion_matrix(y_test, y_pred)
+                    fig, ax = plt.subplots(figsize=(6, 4))
+                    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=["Class 0", "Class 1"], yticklabels=["Class 0", "Class 1"])
+                    ax.set_title("Confusion Matrix")
+                    ax.set_xlabel("Predicted Labels")
+                    ax.set_ylabel("True Labels")
+                    st.pyplot(fig)
                     
-                st.write(traditional_results)
-                traditional_accuracy_placeholder.success(f"##### Accuracy: {traditional_results['Best Score']:.4f}")
+                with new_tuned_model_traditional_col2:
+                    st.markdown("#### Your Tuned Model's Performance")
+                    tuned_accuracy = accuracy_score(y_test, y_pred)
+                    st.success(f"##### Accuracy: {tuned_accuracy:.4f}")                
+
+                        
+                # st.write(traditional_results)
+                # traditional_accuracy_placeholder.success(f"##### Accuracy: {traditional_results['Best Score']:.4f}")
+                traditional_accuracy_placeholder.success(f"##### Accuracy: {tuned_accuracy:.4f}")
                 st.markdown("---")
 
             
