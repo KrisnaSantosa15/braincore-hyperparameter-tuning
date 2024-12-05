@@ -16,7 +16,7 @@ pip install -r requirements.txt
 ```
 3. Run the code
 ```bash
-streamlit run dashboard/main.py
+streamlit run app.py
 ```
 
 ## Teaser
