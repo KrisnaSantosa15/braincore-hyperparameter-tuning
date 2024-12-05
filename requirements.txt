@@ -10,3 +10,4 @@ seaborn
 fastapi
 pydantic
 xgboost
+requests

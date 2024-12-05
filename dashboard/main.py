@@ -32,6 +32,7 @@ import xgboost as xgb
 from xgboost import XGBClassifier
 
 from typing import Optional, List, Tuple, Union, Literal, Dict
+from auth import auth_utils
 
 np.random.seed(42)
 random.seed(42)
@@ -471,13 +472,13 @@ param_grids = {
                 }
             }
 
-def main():
+def app():
     st.set_page_config(
         page_title="ML Hyperparameter Tuning",
         page_icon="🔬",
         layout="wide"
     )
-    
+
     st.title("🤖 Machine Learning Hyperparameter Tuning")
     
     # Introduction
@@ -1044,8 +1045,5 @@ def main():
         else:
             st.markdown("### Waiting for Hyperparameter Tuning to Start")
             st.write("Click **Start Hyperparameter Tuning**.")
-             
-
-
-if __name__ == "__main__":
-    main()
+    
+    st.sidebar.button(label='Sign Out',on_click=auth_utils.sign_out,type='primary')
