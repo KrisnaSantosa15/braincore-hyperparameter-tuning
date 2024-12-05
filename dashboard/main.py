@@ -493,6 +493,12 @@ def app():
         layout="wide"
     )
 
+    col = st.columns([12, 2])[1]
+
+    with col:
+        if st.button("Sign Out", type="secondary", use_container_width=True):
+            logout_confirmation()
+
     st.title("🤖 Machine Learning Hyperparameter Tuning")
     
     # Introduction
@@ -1059,6 +1065,3 @@ def app():
         else:
             st.markdown("### Waiting for Hyperparameter Tuning to Start")
             st.write("Click **Start Hyperparameter Tuning**.")
-    
-    if st.sidebar.button("Sign Out", type="primary"):
-        logout_confirmation()
