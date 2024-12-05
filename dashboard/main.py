@@ -472,6 +472,20 @@ param_grids = {
                 }
             }
 
+@st.dialog("Confirm Logout")
+def logout_confirmation():
+    st.write("Are you sure you want to log out?")
+    
+    if st.button("Confirm Logout"):
+        auth_utils.sign_out()
+        if 'user' in st.session_state:
+            del st.session_state.user
+        
+        st.rerun()
+    
+    if st.button("Cancel"):
+        st.rerun()
+
 def app():
     st.set_page_config(
         page_title="ML Hyperparameter Tuning",
@@ -1046,4 +1060,5 @@ def app():
             st.markdown("### Waiting for Hyperparameter Tuning to Start")
             st.write("Click **Start Hyperparameter Tuning**.")
     
-    st.sidebar.button(label='Sign Out',on_click=auth_utils.sign_out,type='primary')
+    if st.sidebar.button("Sign Out", type="primary"):
+        logout_confirmation()
