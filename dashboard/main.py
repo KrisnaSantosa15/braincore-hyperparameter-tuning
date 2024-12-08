@@ -954,9 +954,9 @@ def app():
                 new_tuned_model_traditional_col1, new_tuned_model_traditional_col2 = st.columns(2)                                   
                 with new_tuned_model_traditional_col1:
                     st.markdown("#### Confusion Matrix")
-                    conf_matrix = confusion_matrix(y_test, y_pred)
+                    traditional_conf_matrix = confusion_matrix(y_test, y_pred)
                     fig_traditional, ax_traditional = plt.subplots(figsize=(6, 4))
-                    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=["Class 0", "Class 1"], yticklabels=["Class 0", "Class 1"])
+                    sns.heatmap(traditional_conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=["Class 0", "Class 1"], yticklabels=["Class 0", "Class 1"])
                     ax_traditional.set_title("Confusion Matrix")
                     ax_traditional.set_xlabel("Predicted Labels")
                     ax_traditional.set_ylabel("True Labels")
@@ -1036,9 +1036,9 @@ def app():
             new_tuned_model_col1, new_tuned_model_col2 = st.columns(2)
             with new_tuned_model_col1:
                 st.markdown("#### Confusion Matrix")
-                conf_matrix = confusion_matrix(y_test, y_pred)
+                meta_conf_matrix = confusion_matrix(y_test, y_pred)
                 fig_meta, ax_meta = plt.subplots(figsize=(6, 4))
-                sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=["Class 0", "Class 1"], yticklabels=["Class 0", "Class 1"])
+                sns.heatmap(meta_conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=["Class 0", "Class 1"], yticklabels=["Class 0", "Class 1"])
                 ax_meta.set_title("Confusion Matrix")
                 ax_meta.set_xlabel("Predicted Labels")
                 ax_meta.set_ylabel("True Labels")
@@ -1065,3 +1065,5 @@ def app():
         else:
             st.markdown("### Waiting for Hyperparameter Tuning to Start")
             st.write("Click **Start Hyperparameter Tuning**.")
+    
+    st.sidebar.text("Version: 1.0.0")
