@@ -474,6 +474,18 @@ param_grids = {
                 }
             }
 
+def plot_confusion_matrix(conf_matrix, title):
+    fig, ax = plt.subplots(figsize=(6, 4))
+    sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', 
+                xticklabels=["Class 0", "Class 1"], 
+                yticklabels=["Class 0", "Class 1"])
+    ax.set_title(title)
+    ax.set_xlabel("Predicted Labels")
+    ax.set_ylabel("True Labels")
+    st.pyplot(fig)
+    plt.close(fig) 
+
+
 @st.dialog("Confirm Logout")
 def logout_confirmation():
     st.write("Are you sure you want to log out?")
@@ -891,23 +903,7 @@ def app():
             cm_col_1, cm_col_2 = st.columns(2)
             with cm_col_1:
                 default_conf_matrix = confusion_matrix(y_test, y_pred_default)
-                fig_default, ax_default = plt.subplots(figsize=(6, 4))
-                sns.heatmap(default_conf_matrix, annot=True, fmt='d', cmap='Blues', 
-                            xticklabels=["Class 0", "Class 1"], yticklabels=["Class 0", "Class 1"])
-                ax_default.set_title("Confusion Matrix - Default Parameters")
-                ax_default.set_xlabel("Predicted Labels")
-                ax_default.set_ylabel("True Labels")
-                
-                # st.pyplot(fig_default)
-                # Save figure to buffer
-                buf = io.BytesIO()
-                fig_default.savefig(buf, format="png")
-                buf.seek(0)
-                plt.close(fig_default)  # Close the figure to free memory
-
-                # Display the image
-                image = Image.open(buf)
-                st.image(image, caption="Confusion Matrix - Default Parameters", use_container_width=True)
+                plot_confusion_matrix(default_conf_matrix, "Confusion Matrix - Default Models")
                 
             with cm_col_2:
                 st.markdown("""
@@ -967,23 +963,7 @@ def app():
                 with new_tuned_model_traditional_col1:
                     st.markdown("#### Confusion Matrix")
                     traditional_conf_matrix = confusion_matrix(y_test, y_pred)
-                    fig_traditional, ax_traditional = plt.subplots(figsize=(6, 4))
-                    sns.heatmap(traditional_conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=["Class 0", "Class 1"], yticklabels=["Class 0", "Class 1"])
-                    ax_traditional.set_title("Confusion Matrix")
-                    ax_traditional.set_xlabel("Predicted Labels")
-                    ax_traditional.set_ylabel("True Labels")
-                    
-                    # st.pyplot(fig_traditional)
-                    
-                    # Save figure to buffer
-                    buf_traditional = io.BytesIO()
-                    fig_traditional.savefig(buf_traditional, format="png")
-                    buf_traditional.seek(0)
-                    plt.close(fig_traditional)  # Close the figure to free memory
-
-                    # Display the image
-                    image = Image.open(buf_traditional)
-                    st.image(image, caption="Confusion Matrix - Traditional Model", use_container_width=True)
+                    plot_confusion_matrix(traditional_conf_matrix, "Confusion Matrix - Traditional Model")
                     
                 with new_tuned_model_traditional_col2:
                     st.markdown("#### Your Tuned Model's Performance")
@@ -1060,23 +1040,7 @@ def app():
             with new_tuned_model_col1:
                 st.markdown("#### Confusion Matrix")
                 meta_conf_matrix = confusion_matrix(y_test, y_pred)
-                fig_meta, ax_meta = plt.subplots(figsize=(6, 4))
-                sns.heatmap(meta_conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=["Class 0", "Class 1"], yticklabels=["Class 0", "Class 1"])
-                ax_meta.set_title("Confusion Matrix")
-                ax_meta.set_xlabel("Predicted Labels")
-                ax_meta.set_ylabel("True Labels")
-                
-                # st.pyplot(fig_meta)
-                
-                # Save figure to buffer
-                buf_meta = io.BytesIO()
-                fig_meta.savefig(buf_meta, format="png")
-                buf_meta.seek(0)
-                plt.close(fig_meta)  # Close the figure to free memory
-
-                # Display the image
-                image = Image.open(buf_meta)
-                st.image(image, caption="Confusion Matrix - Metaheuristic Model", use_container_width=True)
+                plot_confusion_matrix(meta_conf_matrix, "Confusion Matrix - Metaheuristic Model")
                 
             with new_tuned_model_col2:
                 st.markdown("#### Your Tuned Model's Performance")
