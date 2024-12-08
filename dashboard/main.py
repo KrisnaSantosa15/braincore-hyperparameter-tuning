@@ -903,7 +903,35 @@ def app():
             cm_col_1, cm_col_2 = st.columns(2)
             with cm_col_1:
                 default_conf_matrix = confusion_matrix(y_test, y_pred_default)
-                plot_confusion_matrix(default_conf_matrix, "Confusion Matrix - Default Models")
+                default_conf_matrix_flipped = default_conf_matrix[::-1]
+                heatmap_default = go.Figure()
+                heatmap_default = go.Figure(data=go.Heatmap(
+                    z=default_conf_matrix_flipped,  
+                    x=["Class 0", "Class 1"],  
+                    y=["Class 1", "Class 0"],  
+                    colorscale='Blues',
+                    showscale=True,
+                    text=default_conf_matrix_flipped,  
+                    texttemplate="%{text}",  
+                    textfont={"size": 14}  
+                ))
+
+                heatmap_default.update_layout(
+                    title={"text": "Confusion Matrix - Default Parameters<br>",
+                        "y": 0.80,
+                        "x": 0.5,
+                        "xanchor": "center",
+                        "yanchor": "top"},
+                    xaxis_title="Predicted Labels",
+                    yaxis_title="True Labels",
+                    xaxis=dict(tickmode='array', tickvals=[0, 1], ticktext=["Class 0", "Class 1"]),
+                    yaxis=dict(tickmode='array', tickvals=[0, 1], ticktext=["Class 1", "Class 0"]),
+                    width=600,
+                    height=400,
+                    font=dict(size=14)
+                )
+                st.plotly_chart(heatmap_default)                 
+                # plot_confusion_matrix(default_conf_matrix, "Confusion Matrix - Default Models")
                 
             with cm_col_2:
                 st.markdown("""
@@ -963,7 +991,38 @@ def app():
                 with new_tuned_model_traditional_col1:
                     st.markdown("#### Confusion Matrix")
                     traditional_conf_matrix = confusion_matrix(y_test, y_pred)
-                    plot_confusion_matrix(traditional_conf_matrix, "Confusion Matrix - Traditional Model")
+                    traditional_conf_matrix_flipped = traditional_conf_matrix[::-1]
+                    heatmap_traditional = go.Figure()
+                    heatmap_traditional = go.Figure(data=go.Heatmap(
+                        z=traditional_conf_matrix_flipped,  
+                        x=["Class 0", "Class 1"],  
+                        y=["Class 1", "Class 0"],  
+                        colorscale='Blues',
+                        showscale=True,
+                        text=traditional_conf_matrix_flipped,  
+                        texttemplate="%{text}",  
+                        textfont={"size": 14}  
+                    ))
+
+                    heatmap_traditional.update_layout(
+                        title={"text": "Confusion Matrix - Traditional Model<br>",
+                            "y": 0.80,
+                            "x": 0.5,
+                            "xanchor": "center",
+                            "yanchor": "top"},
+                        xaxis_title="Predicted Labels",
+                        yaxis_title="True Labels",
+                        xaxis=dict(tickmode='array', tickvals=[0, 1], ticktext=["Class 0", "Class 1"]),
+                        yaxis=dict(tickmode='array', tickvals=[0, 1], ticktext=["Class 1", "Class 0"]),
+                        width=600,
+                        height=400,
+                        font=dict(size=14)
+                    )
+
+                    # Display di Streamlit
+                    st.plotly_chart(heatmap_traditional)
+                                        
+                    # plot_confusion_matrix(traditional_conf_matrix, "Confusion Matrix - Traditional Model")
                     
                 with new_tuned_model_traditional_col2:
                     st.markdown("#### Your Tuned Model's Performance")
@@ -1040,7 +1099,37 @@ def app():
             with new_tuned_model_col1:
                 st.markdown("#### Confusion Matrix")
                 meta_conf_matrix = confusion_matrix(y_test, y_pred)
-                plot_confusion_matrix(meta_conf_matrix, "Confusion Matrix - Metaheuristic Model")
+                tuned_conf_matrix_flipped = meta_conf_matrix[::-1]
+                heatmap_tuned = go.Figure()
+                heatmap_tuned = go.Figure(data=go.Heatmap(
+                    z=tuned_conf_matrix_flipped,  
+                    x=["Class 0", "Class 1"],  
+                    y=["Class 1", "Class 0"],  
+                    colorscale='Blues',
+                    showscale=True,
+                    text=tuned_conf_matrix_flipped,  
+                    texttemplate="%{text}",  
+                    textfont={"size": 14}  
+                ))
+
+                heatmap_tuned.update_layout(
+                    title={"text": "Confusion Matrix - Default Parameters<br>",
+                        "y": 0.80,
+                        "x": 0.5,
+                        "xanchor": "center",
+                        "yanchor": "top"},
+                    xaxis_title="Predicted Labels",
+                    yaxis_title="True Labels",
+                    xaxis=dict(tickmode='array', tickvals=[0, 1], ticktext=["Class 0", "Class 1"]),
+                    yaxis=dict(tickmode='array', tickvals=[0, 1], ticktext=["Class 1", "Class 0"]),
+                    width=600,
+                    height=400,
+                    font=dict(size=14)
+                )
+
+                # Display di Streamlit
+                st.plotly_chart(heatmap_tuned)                  
+                # plot_confusion_matrix(meta_conf_matrix, "Confusion Matrix - Metaheuristic Model")
                 
             with new_tuned_model_col2:
                 st.markdown("#### Your Tuned Model's Performance")
