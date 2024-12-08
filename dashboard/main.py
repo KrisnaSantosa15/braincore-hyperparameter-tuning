@@ -2,6 +2,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import seaborn as sns
 import streamlit as st
+import io
+from PIL import Image
 import numpy as np
 import pandas as pd
 import random
@@ -895,7 +897,17 @@ def app():
                 ax_default.set_title("Confusion Matrix - Default Parameters")
                 ax_default.set_xlabel("Predicted Labels")
                 ax_default.set_ylabel("True Labels")
-                st.pyplot(fig_default)
+                
+                # st.pyplot(fig_default)
+                # Save figure to buffer
+                buf = io.BytesIO()
+                fig_default.savefig(buf, format="png")
+                buf.seek(0)
+                plt.close(fig_default)  # Close the figure to free memory
+
+                # Display the image
+                image = Image.open(buf)
+                st.image(image, caption="Confusion Matrix - Default Parameters", use_container_width=True)
                 
             with cm_col_2:
                 st.markdown("""
@@ -960,7 +972,18 @@ def app():
                     ax_traditional.set_title("Confusion Matrix")
                     ax_traditional.set_xlabel("Predicted Labels")
                     ax_traditional.set_ylabel("True Labels")
-                    st.pyplot(fig_traditional)
+                    
+                    # st.pyplot(fig_traditional)
+                    
+                    # Save figure to buffer
+                    buf_traditional = io.BytesIO()
+                    fig_traditional.savefig(buf_traditional, format="png")
+                    buf_traditional.seek(0)
+                    plt.close(fig_traditional)  # Close the figure to free memory
+
+                    # Display the image
+                    image = Image.open(buf_traditional)
+                    st.image(image, caption="Confusion Matrix - Traditional Model", use_container_width=True)
                     
                 with new_tuned_model_traditional_col2:
                     st.markdown("#### Your Tuned Model's Performance")
@@ -1042,7 +1065,18 @@ def app():
                 ax_meta.set_title("Confusion Matrix")
                 ax_meta.set_xlabel("Predicted Labels")
                 ax_meta.set_ylabel("True Labels")
-                st.pyplot(fig_meta)
+                
+                # st.pyplot(fig_meta)
+                
+                # Save figure to buffer
+                buf_meta = io.BytesIO()
+                fig_meta.savefig(buf_meta, format="png")
+                buf_meta.seek(0)
+                plt.close(fig_meta)  # Close the figure to free memory
+
+                # Display the image
+                image = Image.open(buf_meta)
+                st.image(image, caption="Confusion Matrix - Metaheuristic Model", use_container_width=True)
                 
             with new_tuned_model_col2:
                 st.markdown("#### Your Tuned Model's Performance")
@@ -1066,4 +1100,4 @@ def app():
             st.markdown("### Waiting for Hyperparameter Tuning to Start")
             st.write("Click **Start Hyperparameter Tuning**.")
     
-    st.sidebar.text("Version: 1.0.0")
+    st.sidebar.text("Version: 1.0.1")

@@ -4,6 +4,15 @@
 
 This project is about tuning the machine learning hyperparameter in alzheimer dataset using Metaheuristic Optimization
 
+## Changelog
+
+**Version 1.0.0**
+- Initial Release
+- Add Streamlit Dashboard
+
+**Version 1.0.1**
+- Change confusion matrix using byte stream
+
 ## How to run the code
 1. Clone the repository
 ```bash
